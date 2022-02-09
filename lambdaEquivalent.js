@@ -56,13 +56,15 @@ exports.handler = async function (event) {
         res.on("end", async function () {
           console.log(responseBody);
           if (responseBody.search("true") > 0) {
+            await sendSms("There is a slot available at " + siteId);
             await sendEmail(
               "There is a slot available at " + siteId,
               responseBody
             );
             console.log("There is available");
           } else {
-            await sendEmail("No slot available at " + siteId, responseBody);
+            // await sendSms("No slot available at " + siteId);
+            //await sendEmail("No slot available at " + siteId, responseBody);
             console.log("No Available");
           }
         });
@@ -75,6 +77,26 @@ exports.handler = async function (event) {
       req.end();
     });
   }
+  
+  async function sendSms(body) {
+    var params = {
+      Message: body, /* required */
+      PhoneNumber: '+639774887682',
+    };
+    
+    // Create promise and SNS service object
+    var publishTextPromise = new aws.SNS({apiVersion: '2010-03-31'}).publish(params).promise();
+    
+    // Handle promise's fulfilled/rejected states
+    return publishTextPromise.then(
+      function(data) {
+        console.log("MessageID is " + data.MessageId);
+      }).catch(
+        function(err) {
+        console.error(err, err.stack);
+      });
+  }
+  
   async function sendEmail(body, result) {
     var params = {
       Destination: {
